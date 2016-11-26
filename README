@@ -1,0 +1,13 @@
+
+cd ~/spi_gpio/BeagleBone-GPIO
+./set_bus.sh
+gcc -Isrc main.c -lgpiommap
+
+# valve 1->2, 2->3, 3->4, 8->5
+# potentiometer input: shoulder 6, elbow 5
+
+#     setState(1, 0.0);  // arm ext
+#     setState(2, 0.0);  // arm comp
+#     setState(3, 0.6);  // shoulder comp
+#     setState(8, 0.0);  // shoulder ext
+
