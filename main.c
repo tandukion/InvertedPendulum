@@ -15,7 +15,7 @@
 #define pin_dout2_sensor  P9_15 // 1_19=51
 #define pin_cs_sensor P9_13 // 0_31=31
 #define NUM_ADC_PORT 8
-#define NUM_ADC 2
+#define NUM_ADC 1
 
 // for valves
 #define pin_spi_cs2  P9_28 // 3_17=123 // P9_42 // 0_7 =7
@@ -245,10 +245,41 @@ void init_sensor(void) {
 	set_CS_SENSOR(false);
 }
 
+
+/* Testing Function */
+void test_sensor (){
+  int i,k;
+  unsigned long *tmp_val0;
+  unsigned long tmp_val[NUM_ADC_PORT];
+
+  unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
+  
+  for (i = 0; i< NUM_ADC; i++){
+    tmp_val0=read_sensor(i,tmp_val);
+    for (k = 0; k< NUM_ADC_PORT; k++){
+      SensorValue[i][k]=tmp_val0[k];
+      printf("%lu\n", SensorValue[i][k]);
+    }
+  }
+}
+
+
+void test_valve (int ch_num){
+  int i;
+  double coef=0;
+
+  for (i=0;i<10;i++){
+    setState(ch_num,coef);
+    usleep(500000);
+    coef+=0.1;
+  }
+}
+
+
 /*******************************************/
 
 int main() {
-
+  
 	init();
 	init_pins(); // ALL 5 pins are HIGH except for GND
 	init_DAConvAD5328();
@@ -267,6 +298,10 @@ int main() {
 	unsigned long *tmp_val0;
 	unsigned long tmp_val[NUM_ADC_PORT];
 
+	test_sensor();
+
+
+	/*
 	for (i = 0; i < SampleNum; i++){ 
 	  if (i > 2000){
 		for (ch_num = 0; ch_num< 16; ch_num++){
@@ -293,6 +328,7 @@ int main() {
 	  TimeData[i] = clock();
 	  usleep(100);
 	}
+	*/
 	
 
 	// ============= File Writing =========
