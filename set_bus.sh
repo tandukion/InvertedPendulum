@@ -36,43 +36,42 @@ echo out > /sys/class/gpio/gpio31/direction
 
 # Board #2
 # DOUT2
-# P9_16 1_19=51
-echo 51 > /sys/class/gpio/export
-echo in > /sys/class/gpio/gpio51/direction
+# P9_15 1_16=48
+#echo 48 > /sys/class/gpio/export
+#echo in > /sys/class/gpio/gpio48/direction
 
 ####################
 #  Pin for Valves  #
 ####################
 # Board #1
 # CS2
-# P9_28 3_17=123
-echo 123 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio123/direction
+# P9_28 3_17=113
+#echo 113 > /sys/class/gpio/export
+#echo out > /sys/class/gpio/gpio113/direction
 # P9_42 0_7=7
-#echo 7 > /sys/class/gpio/export
-#echo out > /sys/class/gpio/gpio7/direction
+echo 7 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio7/direction
 
 # CS1
-# P9_27 3_19=125
-echo 125 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio125/direction
+# P9_27 3_19=115
+#echo 115 > /sys/class/gpio/export
+#echo out > /sys/class/gpio/gpio115/direction
 # P9_16 1_19=51
-#echo 51 > /sys/class/gpio/export
-#echo out > /sys/class/gpio/gpio51/direction
+echo 51 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio51/direction
 
 # MOSI
-# P9_30 3_16=122
-echo 122 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio122/direction
+# P9_30 3_16=112
+echo 112 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio112/direction
 
 # SCLK
-# P9_31 3_14=120
-echo 120 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio120/direction
-
+# P9_31 3_14=110
+#echo 110 > /sys/class/gpio/export
+#echo out > /sys/class/gpio/gpio110/direction
 # P9_21 0_3=3
-#echo 3 > /sys/class/gpio/export
-#echo out > /sys/class/gpio/gpio3/direction
+echo 3 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio3/direction
 
 # Other
 # P9_22 0_2=2
