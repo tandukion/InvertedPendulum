@@ -15,7 +15,7 @@
 #define pin_dout2_sensor  P9_15 // 1_19=51
 #define pin_cs_sensor P9_13 // 0_31=31
 #define NUM_ADC_PORT 8
-#define NUM_ADC 1
+#define NUM_ADC 2
 
 // for valves
 #define pin_spi_cs2  P9_28 // 3_17=123 // P9_42 // 0_7 =7
@@ -28,6 +28,22 @@
 // for analog input
 #define NUM_OF_AINS 7
 #define AIO_NUM 7
+
+// INDEX FOR SENSOR
+#define PIN_POT_1 0
+#define PIN_PRES_1 1
+#define PIN_PRES_2 2
+
+// VALUE
+#define MAX_PRESSURE 0.6
+
+
+/*************************************************************/
+/**                   GLOBAL VARIABLES                      **/
+/*************************************************************/
+
+
+
 
 /**** analog sensors ****/
 PIN analog_pin[NUM_OF_AINS];
@@ -60,6 +76,11 @@ uint32_t myAnalogRead(int i)
 
 	return num;
 }
+
+
+/*************************************************************/
+/**                  FUNCTION FOR VALVES                    **/
+/*************************************************************/
 
 /**** SPI for valves ****/
 bool clock_edge = false;
@@ -129,6 +150,10 @@ void setState(unsigned int ch, double pressure_coeff)
 	setDARegister(ch, (unsigned short)(pressure_coeff * resolution));
 }
 
+/*************************************************************/
+/**                  FUNCTION FOR SENSOR                    **/
+/*************************************************************/
+
 /**** SPI for sensors ****/
 void set_DIN_SENSOR(bool value) { digitalWrite(pin_din_sensor, value); }
 void set_CLK_SENSOR(bool value) { digitalWrite(pin_clk_sensor, value); }
@@ -189,6 +214,22 @@ unsigned long *read_sensor(unsigned long adc_num,unsigned long* sensorVal){
     return(sensorVal);
 }
 
+
+
+void read_sensor_all (unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT]){
+  int j,k;
+  unsigned long *tmp_val0;
+  unsigned long tmp_val[NUM_ADC_PORT];
+
+  for (j = 0; j< NUM_ADC; j++){
+    tmp_val0=read_sensor(j,tmp_val);
+    for (k = 0; k< NUM_ADC_PORT; k++){
+      SensorValue[j][k]=tmp_val0[k];
+      //printf("[%d][%d] %lu\n",j,k,SensorValue[j][k]);
+    }
+  }
+}
+
 /*******************************************/
 /*              Init Functions              /
 /*******************************************/
@@ -246,25 +287,50 @@ void init_sensor(void) {
 }
 
 
-/* Testing Function */
-void test_sensor (){
-  int i,k;
-  unsigned long *tmp_val0;
-  unsigned long tmp_val[NUM_ADC_PORT];
 
-  unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
+/*******************************/
+/*     Testing Function        */
+/*******************************/
+
+void test_sensor (){
+  int j,k;
+
+  unsigned long Value[NUM_ADC][NUM_ADC_PORT];
   
-  for (i = 0; i< NUM_ADC; i++){
-    tmp_val0=read_sensor(i,tmp_val);
+  read_sensor_all(Value);
+ 
+  /**/
+  for (j = 0; j< NUM_ADC; j++){
     for (k = 0; k< NUM_ADC_PORT; k++){
-      SensorValue[i][k]=tmp_val0[k];
-      printf("%lu\n", SensorValue[i][k]);
+      printf("[%d][%d] %lu\n",j,k, Value[j][k]);
     }
+  }
+  printf ("-------------------\n");
+  /**/
+}
+
+void test_valve (){
+
+  int mus_num;
+  double val;
+
+  printf ("Muscle number : ");
+  scanf ("%d",&mus_num);
+  printf ("Testing muscle number %d\n", mus_num);
+
+  while(1){
+    printf("Input pressure coef : ");
+    scanf ("%lf",&val);
+    //printf ("%lf\n",val);
+    if ((val>=0)&&(val<=1)){
+      setState(mus_num,val);
+      
+    }
+    
   }
 }
 
-
-void test_valve (int ch_num){
+void test_valve_sequence (int ch_num){
   int i;
   double coef=0;
 
@@ -276,7 +342,7 @@ void test_valve (int ch_num){
 }
 
 
-/*******************************************/
+/**********************************************************************************/
 
 int main() {
   
@@ -298,8 +364,17 @@ int main() {
 	unsigned long *tmp_val0;
 	unsigned long tmp_val[NUM_ADC_PORT];
 
-	test_sensor();
+	/**/
+	// Testing Function
 
+	while(1){
+	test_sensor();
+	usleep(500000);
+	}
+	/**/
+
+	//test_valve();
+	
 
 	/*
 	for (i = 0; i < SampleNum; i++){ 
