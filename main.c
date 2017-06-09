@@ -30,14 +30,16 @@
 #define AIO_NUM 7
 
 // INDEX FOR SENSOR
-#define PIN_POT_1 0
-#define PIN_PRES_1 1
-#define PIN_PRES_2 2
+#define PIN_POT_1 0     // Pin for Potensiometer 1
+#define PIN_PRES_1 1    // Pin for Pressure Sensor 1
+#define PIN_PRES_2 2    // Pin for Pressure Sensor 2
 
 // VALUE
 #define MAX_PRESSURE 0.6
 
 #define NUM_OF_MUSCLE 2
+
+#define MAX_SAMPLE_NUM
 
 /*************************************************************/
 /**                   GLOBAL VARIABLES                      **/
@@ -172,6 +174,12 @@ int get_DOUT_SENSOR(int adc_num) {
 	}
 }
 
+
+/***************************************************************/
+// Desc: Read ADC values from ONLY 1 ADC Board
+// Input:  adc_num : the index of ADC Board
+// Output: Sensor Val -> 1D array of Sensor Value in 1 ADC Board
+
 unsigned long *read_sensor(unsigned long adc_num,unsigned long* sensorVal){
 	
 	unsigned long pin_num=0x00;
@@ -219,6 +227,11 @@ unsigned long *read_sensor(unsigned long adc_num,unsigned long* sensorVal){
     return(sensorVal);
 }
 
+/***************************************************************/
+// Desc: Read ADC values for all available ADC Board
+// Output: Sensor Val -> 2D array of Sensor Value in all ADC Board
+//       * There is no index here, only all the ADC Value on 1 time
+
 void read_sensor_all (unsigned long SensorVal[NUM_ADC][NUM_ADC_PORT]){
   int j,k;
   unsigned long *tmp_val0;
@@ -232,6 +245,8 @@ void read_sensor_all (unsigned long SensorVal[NUM_ADC][NUM_ADC_PORT]){
     }
   }
 }
+
+
 
 
 /*******************************************/
@@ -290,6 +305,10 @@ void init_sensor(void) {
 }
 
 
+/*****************************/
+/*  ADCValue to Pressure     */
+/****************************/
+ 
 double ADCtoPressure (unsigned long ADCValue){
   // Pressure Sensor Specification
   double alpha = 0.0009;
@@ -307,11 +326,52 @@ double ADCtoPressure (unsigned long ADCValue){
 }
 
 
+/***************************/
+/*     FILE WRITING        */
+/***************************/
+ 
+int logging (int SampleNum){
+  FILE *fp;
+  char str[100];
+
+  int i,j,k;
+  // int SampleNum; //local SampleNum
+
+  time_t now = time(NULL);
+  struct tm *pnow = localtime (&now);
+
+  //sprintf ();
+	
+  fp = fopen("data/test.txt","w");
+  if (fp == NULL){
+    printf("File open error\n");
+    return 0;
+  }
+
+  for (i = 0; i < SampleNum; i++){ 
+    sprintf(str, "%d\t", i);//TimeData[i]);
+    fputs(str, fp);
+    for (j = 0; j< NUM_ADC; j++){
+      for (k = 0; k< NUM_ADC_PORT; k++){
+	//sprintf(str, "%10lu\t", SensorData[i][j][k]);
+	  fputs(str, fp);
+      }
+    }
+    sprintf(str, "\n");
+    fputs(str, fp);
+  }
+
+  fclose(fp);  
+}
+ 
+
 /*******************************/
 /*     Testing Function        */
 /*******************************/
 
-void test_sensor (){
+//===== Running test to print all the Sensor Data ======
+
+unsigned long * test_sensor (int index){
   int j,k;
 
   unsigned long Value[NUM_ADC][NUM_ADC_PORT];
@@ -320,14 +380,18 @@ void test_sensor (){
  
   /**/
   for (j = 0; j< NUM_ADC; j++){
-    for (k = 0; k< NUM_ADC_PORT; k++){
-      printf("[%d][%d] %lu\n",j,k, Value[j][k]);
+    for (k = 0; k< NUM_ADC_PORT; k++){ 
+     printf("[%d][%d] %lu\n",j,k, Value[j][k]);
     }
   }
   printf ("-------------------\n");
   /**/
+
+  return (Value);
 }
 
+//===========  Test one Muscle with Specific Pressure ===============
+ 
 void test_valve (){
 
   int mus_num;
@@ -359,6 +423,8 @@ void test_valve (){
   }
 }
 
+//======= Testing assigning pressure sequentially from 1st to 2nd muscle (1 DOF) =====
+ 
 void test_valve_sequence (){
   int i,j;
   int mus_num;
@@ -389,6 +455,7 @@ void test_valve_sequence (){
 }
 
 
+
 /**********************************************************************************/
 
 int main(int argc, char *argv[]) {
@@ -405,6 +472,7 @@ int main(int argc, char *argv[]) {
 
 	int SampleNum = 3000;
 	unsigned long SensorData[SampleNum][NUM_ADC][NUM_ADC_PORT];
+	unsigned long ***SensorArray;
 	clock_t TimeData[SampleNum];
 	//int ValveNum = 1;
 
@@ -420,10 +488,11 @@ int main(int argc, char *argv[]) {
 	  switch (*argv[1]){
 	  case '1':
 	    printf("Testing Sensor\n");
-	    while(1){
-	      test_sensor();
+	    for (i = 0; i < SampleNum; i++){
+	      SensorArray = test_sensor(i);
 	      usleep(100000);
 	    }
+	    //logging(SampleNum,SensorData);
 	    break;
 	  case '2':
 	    printf("Testing Valve\n");
@@ -479,7 +548,12 @@ int main(int argc, char *argv[]) {
 	FILE *fp;
 	char str[100];
 
-	fp = fopen("data/output_test151120.txt","w");
+	time_t now = time(NULL);
+	struct tm *pnow = localtime (&now);
+
+	sprintf (
+	
+	fp = fopen("data/test_.txt","w");
 	if (fp == NULL){
 	  printf("File open error\n");
 	  return;
