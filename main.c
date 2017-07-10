@@ -47,7 +47,7 @@
 
 unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
 
-int SampleNum = 10;
+int SampleNum = 3000;
 
 /* Table for muscle valve number and sensor number */
 int muscle_sensor [NUM_OF_MUSCLE]= {PIN_PRES_1,PIN_PRES_2};
@@ -84,7 +84,6 @@ uint32_t myAnalogRead(int i)
 
 	return num;
 }
-
 
 /*************************************************************/
 /**                  FUNCTION FOR VALVES                    **/
@@ -333,6 +332,19 @@ double ADCtoPressure (unsigned long ADCValue){
   return temp;
 }
 
+/****************************/
+/*  ADCValue to Angle       */
+/****************************/
+
+double ADCtoAngle (unsigned long ADCValue){
+  double temp;
+  double shift = 180;   //Shifting degree as 0
+  /* Output in degree */
+  temp = (((double)ADCValue/4096)*360) - shift;
+  return temp;
+}
+
+
 
 /***************************/
 /*     FILE WRITING        */
@@ -372,7 +384,7 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
     }
     strcat(str,".txt");
 
-    fp = fopen(str,"w");
+    fp = fopen(str,"w");  // "w" : create file for writing 
     if (fp == NULL){
       printf("File open error\n");
       return 0;
@@ -402,18 +414,30 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
   }
 }
 
+/* start and only open file for log */
 void startlog(const char* message){
   logging(0,message,NULL,NULL);
 }
 
+/* input log on specific index */
 void entrylog(int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT]){
   logging(1,"",index,SensorVal);
 }
 
+/* close file */
 void endlog() {
   logging(2,"",NULL,NULL);
 }
- 
+
+/* */
+void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT]){
+  int i;
+  startlog(message);
+  for (i=0;i<SampleNum;i++){
+    entrylog (i,SensorVal);
+  }
+  endlog();
+}
 
 /*******************************/
 /*     Testing Function        */
@@ -422,10 +446,10 @@ void endlog() {
 /*===== Running test to print all the Sensor Data ======*/
 /* Read and print only ONCE for all sensor */
 
-unsigned long * test_sensor (int SampleNum){
+void test_sensor (int SampleNum){
   int index,j,k;
   static unsigned long Value[MAX_SAMPLE_NUM][NUM_ADC][NUM_ADC_PORT];
-  
+
   startlog("test_sensor");
 
   for(index=0;index<SampleNum;index++){
@@ -546,18 +570,21 @@ int main(int argc, char *argv[]) {
 	  case '1':
 	    printf("Testing Sensor\n");
 	    /* this is for using function */
-	    SensorArray = test_sensor(SampleNum);
+	    //test_sensor(SampleNum);
 
 	    /* this is for direct reading from main, to test reading at once in main loop */
-	    /*
-	    read_sensor_all(1,SensorData);
-	    for (j = 0; j< NUM_ADC; j++){
-	      for (k = 0; k< NUM_ADC_PORT; k++){ 
-		printf("[1][%d][%d] %lu\n",j,k, SensorData[1][j][k]);
+	    /**/
+	    for (i=0;i<SampleNum;i++){
+	      read_sensor_all(i,SensorData);
+	      for (j = 0; j< NUM_ADC; j++){
+		for (k = 0; k< NUM_ADC_PORT; k++){ 
+		  printf("[%d][%d][%d] %lu\n",j,k, SensorData[i][j][k]);
+		}
 	      }
 	    }
 	    printf ("-------------------\n");
-	    */
+	    fulllog("",SensorData);
+	    /**/
 	    break;
 	  case '2':
 	    printf("Testing Valve\n");
