@@ -578,7 +578,7 @@ int main(int argc, char *argv[]) {
 	      read_sensor_all(i,SensorData);
 	      for (j = 0; j< NUM_ADC; j++){
 		for (k = 0; k< NUM_ADC_PORT; k++){ 
-		  printf("[%d][%d][%d] %lu\n",j,k, SensorData[i][j][k]);
+		  printf("[%d][%d][%d] %lu\n",i,j,k, SensorData[i][j][k]);
 		}
 	      }
 	    }
