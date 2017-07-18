@@ -58,11 +58,11 @@
 #define NUM_OF_CHANNELS 16
 
 /* for IMU */
-#define portName "/dev/ttyUSB0"
-#define baudRate 921600
+#define PORTNAME "/dev/ttyUSB0"
+#define BAUDRATE 921600
 
-#define outputMode XOM_Orientation
-#define outputSettings XOS_OrientationMode_Quaternion
+#define OUTPUT_MODE XOM_Orientation
+#define OUTPUT_SETTINGS XOS_OrientationMode_Quaternion
 
 /* for analog input */
 #define NUM_OF_AINS 7
@@ -93,7 +93,7 @@ XsQuaternion quaternion;
 XsEuler euler;
 
 /* Xsens IMU Configuration */
-// char portName[20] = "/dev/ttyUSB0";
+char portName[20] = "/dev/ttyUSB0";
 //XsOutputMode outputMode = XOM_Orientation; // output orientation data
 //XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion; // output orientation data as quaternion
 
@@ -712,8 +712,8 @@ int main(int argc, char *argv[]) {
 	init_DAConvAD5328();
 	init_sensor();
 
-	init_IMU(&device,&mtPort,portName,baudRate);
-	config_IMU(&device,&mtPort, outputMode, outputSettings);
+	init_IMU(&device,&mtPort,PORTNAME,BAUDRATE);
+	config_IMU(&device,&mtPort, OUTPUT_MODE, OUTPUT_SETTINGS);
 
 	int i,j,k;
 	unsigned int ch_num;
