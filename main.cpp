@@ -515,9 +515,9 @@ double ADCtoAngle (unsigned long ADCValue){
 
 
 
-/**************************************************/
-/*                FILE WRITING                    */
-/**************************************************/
+/*************************************************************/
+/**                    FILE WRITING                         **/
+/*************************************************************/
 
 
 /***************************************************************/
@@ -608,9 +608,9 @@ void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_POR
   endlog();
 }
 
-/*******************************/
-/*     Testing Function        */
-/*******************************/
+/*************************************************************/
+/**                    TESTING FUNCTION                         **/
+/*************************************************************/
 
 /*===== Running test to print all the Sensor Data ======*/
 /* Read and print only ONCE for all sensor */
@@ -637,6 +637,26 @@ void test_sensor (int SampleNum){
 
   //return (Value);
 }
+
+void test_IMU(){
+	std::cout << "Looping Printing by accessing function each time.." << std::endl;
+	while(1)
+	  {
+	  measure_IMU(&device,&mtPort,&quaternion,&euler);
+	  std::cout  << "\r"
+		    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
+		    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
+		    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
+		    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
+	    ;
+	  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
+		    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
+		    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
+		   ;
+	  }
+	return 0;
+}
+
 
 /*======  Test one Muscle with Specific Pressure =======*/
 void test_valve (){
@@ -753,11 +773,14 @@ int main(int argc, char *argv[]) {
 	    fulllog("",SensorData);
 	    /**/
 	    break;
-	  case '2':
+		case '2':
+			test_IMU();
+			break;
+	  case '3':
 	    printf("Testing Valve\n");
 	    test_valve();
 	    break;
-	  case '3':
+	  case '4':
 	    printf("Testing valve sequentially\n");
 	    test_valve_sequence();
 	    break;
@@ -766,8 +789,9 @@ int main(int argc, char *argv[]) {
 	else{
 	  printf("Please start program with an argument:\n");
 	  printf("1 : Testing Sensor\n");
-	  printf("2 : Testing a desired Muscle/Valve with desired pressure\n");
-	  printf("3 : Testing all Muscle/Valves sequentially\n");
+		printf("2 : Testing IMU Sensor")
+	  printf("3 : Testing a desired Muscle/Valve with desired pressure\n");
+	  printf("4 : Testing all Muscle/Valves sequentially\n");
 	}
 
 
