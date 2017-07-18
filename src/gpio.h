@@ -20,6 +20,8 @@
 #include <fcntl.h>
 #include "am335x.h"
 
+#include <unistd.h>
+
 #define HIGH (1)
 #define LOW  (0) 
 int init(); /*!< mmap /dev/mem into memory */

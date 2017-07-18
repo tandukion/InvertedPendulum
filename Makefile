@@ -1,33 +1,46 @@
-DIR = src/
-SRC = gpio.c
-OBJ = $(DIR)$(SRC:.c=.o)
-NAME = ./lib/libgpiommap.a
-TMS = main.c
-TMO = $(TMS:.c=.o)
-TMN = gpiommap
-RM = rm -f
+TARGET := pendulum
 
-all: $(OBJ)
-	ar -rc $(NAME) $(OBJ)
-	ranlib $(NAME)
+OBJLIBS = libgpiommap libxcommunication libxstypes
 
-clean:
-	-$(RM) $(OBJ)
-	-$(RM) *~
-	-$(RM) \#*
-	-$(RM) *.core
+# C_FILES := main.c
+# OBJECTS := $(C_FILES:.c=.o)
+CPP_FILES := main.cpp
+OBJECTS := $(CPP_FILES:.cpp=.o)
+# OBJECTS += src/gpio.o
 
-fclean: clean
-	-$(RM) $(NAME)
-	-$(RM) $(TMN)
+HEADERS = $(wildcard *.h)
+INCLUDE = -I. -Iinclude -Isrc
+CFLAGS =$(INCLUDE) -include config.h
+CXXFLAGS =-std=c++11 $(CFLAGS)
+LFLAGS = -Llib -lgpiommap -lxdevice -lxcommunication -lxstypes -lpthread -lrt -ldl
 
-re: fclean all
+RM = rm -rf
 
-$(NAME): all
+all: $(OBJLIBS) $(TARGET)
 
-ftest: fclean test
+libgpiommap:
+	$(MAKE) -C src $(MFLAGS) all
 
-install: all
-	cp src/gpio.h /usr/include/
-	cp src/am335x.h /usr/include/
-	cp lib/libgpiommap.a /usr/lib/
+libxcommunication : libxstypes
+	-$(MAKE) -C xcommunication $(MFLAGS)
+	-cp xcommunication/libxcommunication.a lib/
+
+libxstypes :
+	-$(MAKE) -C xstypes $(MFLAGS) libxstypes.a
+	-cp xstypes/libxstypes.a lib/
+
+
+$(TARGET): $(OBJECTS)
+#	$(CXX) $(CFLAGS) $(INCLUDE) $^ -o $@ $(LFLAGS)
+# working
+	$(CXX) $(CFLAGS) $(INCLUDE) $^ src/gpio.c -o $@ $(LFLAGS)
+
+clean :
+	$(RM) $(OBJECTS) $(TARGET)
+
+clean_all:
+	-$(RM) $(OBJECTS) $(TARGET)
+	-$(MAKE) -C src $(MFLAGS) clean
+	-$(MAKE) -C xcommunication $(MFLAGS) clean
+	-$(MAKE) -C xstypes $(MFLAGS) clean
+	- rm -rf lib/libxstypes.a lib/libxcommunication.a
