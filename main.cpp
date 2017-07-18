@@ -11,7 +11,6 @@
 #include <time.h>
 #include <string.h>
 
-
 /* For Xsens IMU */
 #include <xsens/xsportinfoarray.h>
 #include <xsens/xsdatapacket.h>
@@ -41,8 +40,6 @@
 #include <conio.h>
 #endif
 
-
-
 /* for sensors */
 #define pin_clk_sensor P9_12 // 1_28=60
 #define pin_din_sensor  P9_11 // 0_30=30
@@ -53,12 +50,19 @@
 #define NUM_ADC 1
 
 /* for valves */
-#define pin_spi_cs2  P9_42 // 0_7 =7 // P9_28 // 3_17=113 // 
-#define pin_spi_cs1  P9_16 // 1_19=51 // P9_27 // 3_19=115 // 
-#define pin_spi_mosi P9_30 // 3_16=112 
+#define pin_spi_cs2  P9_42 // 0_7 =7 // P9_28 // 3_17=113 //
+#define pin_spi_cs1  P9_16 // 1_19=51 // P9_27 // 3_19=115 //
+#define pin_spi_mosi P9_30 // 3_16=112
 #define pin_spi_sclk P9_21 // 0_3=3 // P9_31 // 3_14=110 //
 #define pin_spi_other P9_22 // 0_2=2
 #define NUM_OF_CHANNELS 16
+
+/* for IMU */
+#define portName "/dev/ttyUSB0"
+#define baudRate 921600
+
+#define outputMode XOM_Orientation
+#define outputSettings XOS_OrientationMode_Quaternion
 
 /* for analog input */
 #define NUM_OF_AINS 7
@@ -71,9 +75,7 @@
 
 /* VALUE */
 #define MAX_PRESSURE 0.6
-
 #define NUM_OF_MUSCLE 2
-
 #define MAX_SAMPLE_NUM 10000
 
 /*************************************************************/
@@ -83,6 +85,17 @@
 unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
 
 int SampleNum = 3000;
+
+/* Variable for IMU Data */
+DeviceClass device;
+XsPortInfo mtPort;
+XsQuaternion quaternion;
+XsEuler euler;
+
+/* Xsens IMU Configuration */
+// char portName[20] = "/dev/ttyUSB0";
+//XsOutputMode outputMode = XOM_Orientation; // output orientation data
+//XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion; // output orientation data as quaternion
 
 /* Table for muscle valve number and sensor number */
 int muscle_sensor [NUM_OF_MUSCLE]= {PIN_PRES_1,PIN_PRES_2};
@@ -202,15 +215,14 @@ void setState(unsigned int ch, double pressure_coeff)
 void set_DIN_SENSOR(bool value) { digitalWrite(pin_din_sensor, value); }
 void set_CLK_SENSOR(bool value) { digitalWrite(pin_clk_sensor, value); }
 void set_CS_SENSOR(bool value) { digitalWrite(pin_cs_sensor, value); }
-int get_DOUT_SENSOR(int adc_num) { 
+int get_DOUT_SENSOR(int adc_num) {
 	if(adc_num==0){
-		digitalRead(pin_dout1_sensor); 
+		digitalRead(pin_dout1_sensor);
 	}
 	else{
-		digitalRead(pin_dout2_sensor); 
+		digitalRead(pin_dout2_sensor);
 	}
 }
-
 
 /***************************************************************/
 // read_sensor
@@ -219,24 +231,24 @@ int get_DOUT_SENSOR(int adc_num) {
 // Output: Sensor Val -> 1D array of Sensor Value in 1 ADC Board
 /***************************************************************/
 unsigned long *read_sensor(unsigned long adc_num,unsigned long* sensorVal){
-	
+
 	unsigned long pin_num=0x00;
 	unsigned long sVal;
 	unsigned long commandout=0x00;
-	
+
 	int i;
-	
+
     for(pin_num=0;pin_num<NUM_ADC_PORT;pin_num++){
     	sVal=0x00;
 		set_CS_SENSOR(true);
 		set_CLK_SENSOR(false);
 		set_DIN_SENSOR(false);
 		set_CS_SENSOR(false);
-		
+
     	commandout=pin_num;
     	commandout|=0x18;
     	commandout<<=3;
-		
+
 	    for(i=0;i<5;i++){
 			if(commandout&0x80){
 				set_DIN_SENSOR(true);
@@ -289,11 +301,133 @@ void read_sensor_all (int index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT
 }
 
 
+/*************************************************************/
+/**               FUNCTION FOR XSENS IMU                    **/
+/*************************************************************/
+/********************************************************************/
+// init_IMU
+// Desc  : initialization of Xsens IMU by opening port with baudrate
+// Input : - portName : port of the Xsens IMU (default: /dev/ttyUSB0)
+//         - baudRate
+// Output: - *device : updated DeviceClass for the Xsens
+//         - *mtPort : updated Port name and baudrate
+/********************************************************************/
+void init_IMU(DeviceClass *device, XsPortInfo *mtPort, char *portName, int baudRate){
+
+  XsPortInfoArray portInfoArray;
+
+  XsPortInfo portInfo(portName, XsBaud::numericToRate(baudRate));
+  portInfoArray.push_back(portInfo);
+
+  // Use the first detected device
+  *mtPort = portInfoArray.at(0);
+
+  // Open the port with the detected device
+  std::cout << "Opening port..." << std::endl;
+  device->openPort(*mtPort);
+}
+
+/********************************************************************/
+// config_IMU
+// Desc  : Configure the Xsens output mode (check manual or library)
+//         Enter Config State then return to Measurement State
+// Input : - outputMode
+//         - outputSettings
+// Output: - *device : updated DeviceClass for the Xsens
+//         - *mtPort : updated Port name and baudrate
+/********************************************************************/
+void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings){
+
+  // Put the device in configuration mode
+  std::cout << "Putting device into configuration mode..." << std::endl;
+  device->gotoConfig();
+
+  // Request the device Id to check the device type
+  mtPort->setDeviceId(device->getDeviceId());
+
+  // Print information about detected MTi / MTx / MTmk4 device
+  std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
+  std::cout << "Device: " << device->getProductCode().toStdString() << " opened." << std::endl;
+
+  // Configure the device. Note the differences between MTix and MTmk4
+  std::cout << "Configuring the device..." << std::endl;
+  if (mtPort->deviceId().isMt9c() || mtPort->deviceId().isLegacyMtig())
+    {
+      /* Default Mode configuration */
+      // XsOutputMode outputMode = XOM_Orientation; // output orientation data
+      // XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion; // output orientation data as quaternion
+
+      // set the device configuration
+      device->setDeviceMode(outputMode, outputSettings);
+    }
+  else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
+    {
+      XsOutputConfiguration quat(XDI_Quaternion, 100);
+      XsOutputConfigurationArray configArray;
+      configArray.push_back(quat);
+      device->setOutputConfiguration(configArray);
+    }
+
+  // Put the device in measurement mode
+  std::cout << "Putting device into measurement mode..." << std::endl;
+  device->gotoMeasurement();
+
+}
+
+/********************************************************************/
+// measure_IMU
+// Desc  : Measurement State, getting the data from Xsens
+// Input : - device : updated DeviceClass for the Xsens
+//         - mtPort : updated Port name and baudrate
+//         - outputMode
+//         - outputSettings
+// Output: - quaternion
+//         - euler
+/********************************************************************/
+
+void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsQuaternion *quaternion, XsEuler *euler){
+
+  XsByteArray data;
+  XsMessageArray msgs;
+  bool foundAck = false;
+
+  do {
+    device->readDataToBuffer(data);
+    device->processBufferedData(data, msgs);
+
+    for (XsMessageArray::iterator it = msgs.begin(); it != msgs.end(); ++it)
+      {
+	// Retrieve a packet
+	XsDataPacket packet;
+	if ((*it).getMessageId() == XMID_MtData) {
+	  LegacyDataPacket lpacket(1, false);
+	  lpacket.setMessage((*it));
+	  lpacket.setXbusSystem(false);
+	  lpacket.setDeviceId(mtPort->deviceId(), 0);
+	  lpacket.setDataFormat(XOM_Orientation, XOS_OrientationMode_Quaternion,0);//lint !e534
+	  XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
+	  foundAck = true;
+	}
+	else if ((*it).getMessageId() == XMID_MtData2) {
+	  packet.setMessage((*it));
+	  packet.setDeviceId(mtPort->deviceId());
+	  foundAck = true;
+	}
+
+	// Get the quaternion data
+	*quaternion = packet.orientationQuaternion();
+
+	// Convert packet to euler
+	*euler = packet.orientationEuler();
+      }
+  } while (!foundAck);
+
+}
 
 
-/*******************************************/
-/*              Init Functions              /
-/*******************************************/
+/*************************************************************/
+/**                    INIT FUNCTIONS                       **/
+/*************************************************************/
 void init_pins()
 {
 	set_SCLK(LOW);
@@ -347,35 +481,10 @@ void init_sensor(void) {
 }
 
 
-/********************************************************************/
-// init_IMU
-// Desc  : initialization of Xsens IMU by opening port with baudrate
-// Input : - portName : port of the Xsens IMU (default: /dev/ttyUSB0)
-//         - baudRate
-// Output: - *device : updated DeviceClass for the Xsens
-//         - *mtPort : updated Port name and baudrate
-/********************************************************************/
-void init_IMU(DeviceClass *device, XsPortInfo *mtPort, char *portName, int baudRate){
+/**************************************************/
+/*         ADCValue to Pressure                   */
+/**************************************************/
 
-  XsPortInfoArray portInfoArray;
-
-  XsPortInfo portInfo(portName, XsBaud::numericToRate(baudRate));
-  portInfoArray.push_back(portInfo);
-
-  // Use the first detected device
-  *mtPort = portInfoArray.at(0);
-
-  // Open the port with the detected device
-  std::cout << "Opening port..." << std::endl;
-  device->openPort(*mtPort);
-}
-
-
-
-/*****************************/
-/*  ADCValue to Pressure     */
-/****************************/
- 
 double ADCtoPressure (unsigned long ADCValue){
   /* Pressure Sensor Specification */
   double alpha = 0.0009;
@@ -383,18 +492,18 @@ double ADCtoPressure (unsigned long ADCValue){
   double Perror = 25; //Pressure error in kPa
 
   /* Using error */
-  //double error = Perror*1*alpha; 
+  //double error = Perror*1*alpha;
   /* Not using error */
   double error = 0;
-  
+
   double temp;
   temp = (((double)ADCValue/4096)-error-beta)/alpha /1000;
   return temp;
 }
 
-/****************************/
-/*  ADCValue to Angle       */
-/****************************/
+/**************************************************/
+/*         ADCValue to Angle                      */
+/**************************************************/
 
 double ADCtoAngle (unsigned long ADCValue){
   double temp;
@@ -406,9 +515,9 @@ double ADCtoAngle (unsigned long ADCValue){
 
 
 
-/***************************/
-/*     FILE WRITING        */
-/***************************/
+/**************************************************/
+/*                FILE WRITING                    */
+/**************************************************/
 
 
 /***************************************************************/
@@ -416,7 +525,7 @@ double ADCtoAngle (unsigned long ADCValue){
 // Input  : mode [0] start logging. create and open file
 //               [1] input data
 //               [2] close file
-// Output : 
+// Output :
 /***************************************************************/
 int logging (int mode, const char *message, int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT]){
 //int logging(int mode, const char *message){
@@ -434,17 +543,17 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
     sprintf (str,"log/%d%02d%02d_%02d%02d",
 	   pnow->tm_year+1900,   // year start from 1900
 	   pnow->tm_mon+1,  // month [0,11]
-	   pnow->tm_mday,   
+	   pnow->tm_mday,
 	   pnow->tm_hour,
 	   pnow->tm_min);
-    
+
     if (message!=""){
       strcat (str,"_");
       strcat (str,message);
     }
     strcat(str,".txt");
 
-    fp = fopen(str,"w");  // "w" : create file for writing 
+    fp = fopen(str,"w");  // "w" : create file for writing
     if (fp == NULL){
       printf("File open error\n");
       return 0;
@@ -452,8 +561,8 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
     printf("File created. Start logging\n");
   }
 
- 
-  else if (mode==1){  
+
+  else if (mode==1){
     sprintf(str, "%d\t",index);//TimeData[i]);
     fputs(str, fp);
     for (j = 0; j< NUM_ADC; j++){
@@ -466,7 +575,7 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
     sprintf(str, "\n");
     fputs(str, fp);
   }
-  
+
 
   else if(mode==2){
     printf("End logging\n");
@@ -505,7 +614,6 @@ void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_POR
 
 /*===== Running test to print all the Sensor Data ======*/
 /* Read and print only ONCE for all sensor */
-
 void test_sensor (int SampleNum){
   int index,j,k;
   static unsigned long Value[MAX_SAMPLE_NUM][NUM_ADC][NUM_ADC_PORT];
@@ -516,7 +624,7 @@ void test_sensor (int SampleNum){
     read_sensor_all(index,Value);
     /**/
     for (j = 0; j< NUM_ADC; j++){
-      for (k = 0; k< NUM_ADC_PORT; k++){ 
+      for (k = 0; k< NUM_ADC_PORT; k++){
 	printf("[%d][%d][%d] %lu\n",index,j,k, Value[index][j][k]);
       }
     }
@@ -526,19 +634,17 @@ void test_sensor (int SampleNum){
     entrylog(index,Value);
   }
   endlog();
-  
+
   //return (Value);
 }
 
 /*======  Test one Muscle with Specific Pressure =======*/
- 
 void test_valve (){
 
   int mus_num;
   static int i=0;
   double val,sensorval;
   static unsigned long Value[MAX_SAMPLE_NUM][NUM_ADC][NUM_ADC_PORT];
-
 
   val=0;
 
@@ -554,7 +660,7 @@ void test_valve (){
     if ((val>=0)&&(val<=1)){
       setState(mus_num,val);
       usleep(500000);
-      
+
       read_sensor_all(i,Value);
       //sensorval = ADCtoPressure (SensorValue[0][muscle_sensor[mus_num]]);
       sensorval = ADCtoPressure (Value[i][0][1]);
@@ -568,7 +674,6 @@ void test_valve (){
 }
 
 //======= Testing assigning pressure sequentially from 1st to 2nd muscle (1 DOF) =====
- 
 void test_valve_sequence (){
   int i,j;
   int mus_num;
@@ -576,7 +681,7 @@ void test_valve_sequence (){
   static unsigned long Value[MAX_SAMPLE_NUM][NUM_ADC][NUM_ADC_PORT];
 
   usleep(5000000);
-  
+
   for (j=0;j<NUM_OF_MUSCLE;j++){
     //printf("Input channel number: ");
     //scanf ("%d",&mus_num);
@@ -588,46 +693,45 @@ void test_valve_sequence (){
       setState(mus_num,coef);
       usleep(500000);
       coef+=0.01;
-      
+
       read_sensor_all(i,Value);
       sensorval = ADCtoPressure (Value[i][0][muscle_sensor[mus_num]]);
       printf("muscle #%d :%lf\n",mus_num,sensorval);
     }
-  
     printf("--------\n");
   }
-
 }
-
 
 
 /**********************************************************************************/
 
 int main(int argc, char *argv[]) {
-  
+
 	init(); // from gpio.h
 	init_pins(); // ALL 5 pins are HIGH except for GND
 	init_DAConvAD5328();
 	init_sensor();
 
+	init_IMU(&device,&mtPort,portName,baudRate);
+	config_IMU(&device,&mtPort, outputMode, outputSettings);
+
 	int i,j,k;
 	unsigned int ch_num;
-	for (i = 0; i < NUM_OF_CHANNELS; i++) 
-		setState(i, 0.0); 
+	for (i = 0; i < NUM_OF_CHANNELS; i++)
+		setState(i, 0.0);
 
+
+	/* Variable for ADC Board Data */
 	unsigned long SensorData[SampleNum][NUM_ADC][NUM_ADC_PORT];
 	unsigned long ***SensorArray;
 	clock_t TimeData[SampleNum];
 	//int ValveNum = 1;
 
-	//unsigned long *tmp_val0;
-	//unsigned long tmp_val[NUM_ADC_PORT];
-
 	// Initialize with 0 MPa
 	for (ch_num = 0; ch_num< 16; ch_num++){
 	  setState(ch_num, 0);
 	}
-	
+
 	if (argc==2){
 	  switch (*argv[1]){
 	  case '1':
@@ -640,7 +744,7 @@ int main(int argc, char *argv[]) {
 	    for (i=0;i<SampleNum;i++){
 	      read_sensor_all(i,SensorData);
 	      for (j = 0; j< NUM_ADC; j++){
-		for (k = 0; k< NUM_ADC_PORT; k++){ 
+		for (k = 0; k< NUM_ADC_PORT; k++){
 		  printf("[%d][%d][%d] %lu\n",i,j,k, SensorData[i][j][k]);
 		}
 	      }
@@ -666,18 +770,18 @@ int main(int argc, char *argv[]) {
 	  printf("3 : Testing all Muscle/Valves sequentially\n");
 	}
 
-	
+
 
 	/*
-	for (i = 0; i < SampleNum; i++){ 
+	for (i = 0; i < SampleNum; i++){
 	  if (i > 2000){
 		for (ch_num = 0; ch_num< 16; ch_num++){
 			setState(ch_num, 0); // exhaust
 		}
 	    //setState(ValveNum, 0); // exhaust
-	    
-	    
-	       
+
+
+
 	  }else if (i > 1000){
 		for (ch_num = 0; ch_num< 16; ch_num++){
 			setState(ch_num, 0.5); // supply
@@ -696,7 +800,7 @@ int main(int argc, char *argv[]) {
 	  usleep(100);
 	}
 	*/
-	
+
 
 	// ============= File Writing =========
 	/*
@@ -707,14 +811,14 @@ int main(int argc, char *argv[]) {
 	struct tm *pnow = localtime (&now);
 
 	sprintf (
-	
+
 	fp = fopen("data/test_.txt","w");
 	if (fp == NULL){
 	  printf("File open error\n");
 	  return;
 	}
 
-	for (i = 0; i < SampleNum; i++){ 
+	for (i = 0; i < SampleNum; i++){
 	  sprintf(str, "%d\t", i);//TimeData[i]);
 	  fputs(str, fp);
 	  for (j = 0; j< NUM_ADC; j++){
@@ -734,5 +838,3 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-
-
