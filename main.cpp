@@ -654,7 +654,6 @@ void test_IMU(){
 		    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
 		   ;
 	  }
-	return 0;
 }
 
 
@@ -789,7 +788,7 @@ int main(int argc, char *argv[]) {
 	else{
 	  printf("Please start program with an argument:\n");
 	  printf("1 : Testing Sensor\n");
-		printf("2 : Testing IMU Sensor")
+		printf("2 : Testing IMU Sensor");
 	  printf("3 : Testing a desired Muscle/Valve with desired pressure\n");
 	  printf("4 : Testing all Muscle/Valves sequentially\n");
 	}
