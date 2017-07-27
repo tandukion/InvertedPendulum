@@ -680,7 +680,7 @@ void test_IMU(){
 			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
 			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
 			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
-			<< "size Acc:" << calData.m_acc.size()
+			<< "size Acc:" << calData.m_acc.value(0)
 		    ;
 		  }
 	}
