@@ -424,7 +424,6 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 					*euler = packet.orientationEuler();
 				}
 				else if (outputMode==XOM_Calibrated) {
-					printf("kuya\n");
 					*calData = packet.calibratedData();
 				}
 		 	}
@@ -678,9 +677,10 @@ void test_IMU(){
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 		  std::cout  << "\r"
-			    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
-			    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
-			    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
+			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
+			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
+			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
+			<< calData.m_acc.size()
 		    ;
 		  }
 	}
