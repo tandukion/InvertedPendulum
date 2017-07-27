@@ -417,7 +417,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			foundAck = true;
 				}
 
-				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion) {
+				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
 					// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
 					// Convert packet to euler
