@@ -423,6 +423,9 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 					// Convert packet to euler
 					*euler = packet.orientationEuler();
 				}
+				else if ((outputMode==XOM_Calibrated)&&(outputSettings==XOS_CalibratedMode_All)) {
+					*calData = packet.calibratedData();
+				}
 		 	}
 	} while (!foundAck);
 
@@ -644,22 +647,42 @@ void test_sensor (int SampleNum){
 
 void test_IMU(){
 	std::cout << "Looping Printing by accessing function each time.." << std::endl;
-
-	config_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS);
-	while(1)
-	  {
-	  measure_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS, &quaternion,&euler,&calData);
-	  std::cout  << "\r"
-		    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
-		    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
-		    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
-		    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
-	    ;
-	  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
-		    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
-		    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
-		   ;
-	  }
+	int mode;
+	printf("Output Mode <1:Orientation><2:calibratedData> : ");
+	scanf ("%d",&mode);
+	if (mode==1){
+		XsOutputMode outputMode = XOM_Orientation;
+		XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion;
+		config_IMU(&device,&mtPort, outputMode, outputSettings);
+		while(1)
+		  {
+		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+		  std::cout  << "\r"
+			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
+			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
+			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
+			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
+		    ;
+		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
+			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
+			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
+			   ;
+		  }
+	}
+	else if(mode==2){
+		XsOutputMode outputMode = XOM_Calibrated;
+		XsOutputSettings outputSettings = XOS_CalibratedMode_All;
+		config_IMU(&device,&mtPort, outputMode, outputSettings);
+		while(1)
+		  {
+		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+		  std::cout  << "\r"
+			    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc[1]
+			    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << quaternion.m_acc[2]
+			    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << quaternion.m_acc[3]
+		    ;
+		  }
+	}
 }
 
 
