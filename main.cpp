@@ -61,8 +61,8 @@
 #define PORTNAME "/dev/ttyUSB0"
 #define BAUDRATE 921600
 
-#define OUTPUT_MODE XOM_Orientation
-#define OUTPUT_SETTINGS XOS_OrientationMode_Quaternion
+#define DEFAULT_OUTPUT_MODE XOM_Orientation
+#define DEFAULT_OUTPUT_SETTINGS XOS_OrientationMode_Quaternion
 
 /* for analog input */
 #define NUM_OF_AINS 7
@@ -91,6 +91,7 @@ DeviceClass device;
 XsPortInfo mtPort;
 XsQuaternion quaternion;
 XsEuler euler;
+XsCalibratedData calData;
 
 /* Xsens IMU Configuration */
 char portName[20] = "/dev/ttyUSB0";
@@ -323,7 +324,7 @@ void init_IMU(DeviceClass *device, XsPortInfo *mtPort, char *portName, int baudR
   *mtPort = portInfoArray.at(0);
 
   // Open the port with the detected device
-  std::cout << "Opening port..." << std::endl;
+  //std::cout << "Opening port..." << std::endl;
   device->openPort(*mtPort);
 }
 
@@ -339,18 +340,18 @@ void init_IMU(DeviceClass *device, XsPortInfo *mtPort, char *portName, int baudR
 void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings){
 
   // Put the device in configuration mode
-  std::cout << "Putting device into configuration mode..." << std::endl;
+  //std::cout << "Putting device into configuration mode..." << std::endl;
   device->gotoConfig();
 
   // Request the device Id to check the device type
   mtPort->setDeviceId(device->getDeviceId());
 
   // Print information about detected MTi / MTx / MTmk4 device
-  std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
-  std::cout << "Device: " << device->getProductCode().toStdString() << " opened." << std::endl;
+  //std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
+  //std::cout << "Device: " << device->getProductCode().toStdString() << " opened." << std::endl;
 
   // Configure the device. Note the differences between MTix and MTmk4
-  std::cout << "Configuring the device..." << std::endl;
+  //std::cout << "Configuring the device..." << std::endl;
   if (mtPort->deviceId().isMt9c() || mtPort->deviceId().isLegacyMtig())
     {
       /* Default Mode configuration */
@@ -369,10 +370,12 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
     }
 
   // Put the device in measurement mode
-  std::cout << "Putting device into measurement mode..." << std::endl;
+  //std::cout << "Putting device into measurement mode..." << std::endl;
   device->gotoMeasurement();
 
 }
+
+void setOutput_IMU();
 
 /********************************************************************/
 // measure_IMU
@@ -385,7 +388,7 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 //         - euler
 /********************************************************************/
 
-void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsQuaternion *quaternion, XsEuler *euler){
+void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings, XsQuaternion *quaternion, XsEuler *euler, XsCalibratedData *calData){
 
   XsByteArray data;
   XsMessageArray msgs;
@@ -397,30 +400,31 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsQuaternion *quaterni
 
     for (XsMessageArray::iterator it = msgs.begin(); it != msgs.end(); ++it)
       {
-	// Retrieve a packet
-	XsDataPacket packet;
-	if ((*it).getMessageId() == XMID_MtData) {
-	  LegacyDataPacket lpacket(1, false);
-	  lpacket.setMessage((*it));
-	  lpacket.setXbusSystem(false);
-	  lpacket.setDeviceId(mtPort->deviceId(), 0);
-	  lpacket.setDataFormat(XOM_Orientation, XOS_OrientationMode_Quaternion,0);//lint !e534
-	  XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
-	  foundAck = true;
-	}
-	else if ((*it).getMessageId() == XMID_MtData2) {
-	  packet.setMessage((*it));
-	  packet.setDeviceId(mtPort->deviceId());
-	  foundAck = true;
-	}
+				// Retrieve a packet
+				XsDataPacket packet;
+				if ((*it).getMessageId() == XMID_MtData) {
+	  			LegacyDataPacket lpacket(1, false);
+	  			lpacket.setMessage((*it));
+	  			lpacket.setXbusSystem(false);
+	  			lpacket.setDeviceId(mtPort->deviceId(), 0);
+	  			lpacket.setDataFormat(outputMode, outputSettings,0);//lint !e534
+	  			XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
+	  			foundAck = true;
+				}
+				else if ((*it).getMessageId() == XMID_MtData2) {
+	  			packet.setMessage((*it));
+	  			packet.setDeviceId(mtPort->deviceId());
+	  			foundAck = true;
+				}
 
-	// Get the quaternion data
-	*quaternion = packet.orientationQuaternion();
-
-	// Convert packet to euler
-	*euler = packet.orientationEuler();
-      }
-  } while (!foundAck);
+				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion) {
+					// Get the quaternion data
+					*quaternion = packet.orientationQuaternion();
+					// Convert packet to euler
+					*euler = packet.orientationEuler();
+				}
+		 	}
+	} while (!foundAck);
 
 }
 
@@ -640,9 +644,11 @@ void test_sensor (int SampleNum){
 
 void test_IMU(){
 	std::cout << "Looping Printing by accessing function each time.." << std::endl;
+
+	config_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS);
 	while(1)
 	  {
-	  measure_IMU(&device,&mtPort,&quaternion,&euler);
+	  measure_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS, &quaternion,&euler,&calData);
 	  std::cout  << "\r"
 		    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
 		    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
@@ -732,7 +738,7 @@ int main(int argc, char *argv[]) {
 	init_sensor();
 
 	init_IMU(&device,&mtPort,PORTNAME,BAUDRATE);
-	config_IMU(&device,&mtPort, OUTPUT_MODE, OUTPUT_SETTINGS);
+	config_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS);
 
 	int i,j,k;
 	unsigned int ch_num;
