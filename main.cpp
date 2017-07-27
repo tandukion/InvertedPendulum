@@ -672,15 +672,20 @@ void test_IMU(){
 	else if(mode==2){
 		XsOutputMode outputMode = XOM_Calibrated;
 		XsOutputSettings outputSettings = XOS_CalibratedMode_All;
+
+		double acc;
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
 		while(1)
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+			acc=calData.m_acc.value(0);
 		  std::cout  << "\r"
 			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
 			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
 			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
-			<< "size Acc:" << calData.m_acc.value(0)
+			<< "size Acc:" << calData.m_acc.size()
+			<< ", Acc[0]:" << calData.m_acc.value(0)
+			<< ", Acc:" << acc
 		    ;
 		  }
 	}
