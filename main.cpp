@@ -423,7 +423,8 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 					// Convert packet to euler
 					*euler = packet.orientationEuler();
 				}
-				else if ((outputMode==XOM_Calibrated)&&(outputSettings==XOS_CalibratedMode_All)) {
+				else if (outputMode==XOM_Calibrated)) {
+					printf("kuya\n")
 					*calData = packet.calibratedData();
 				}
 		 	}
