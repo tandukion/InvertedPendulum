@@ -347,7 +347,7 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
   mtPort->setDeviceId(device->getDeviceId());
 
   // Print information about detected MTi / MTx / MTmk4 device
-  //std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
+  std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
   //std::cout << "Device: " << device->getProductCode().toStdString() << " opened." << std::endl;
 
   // Configure the device. Note the differences between MTix and MTmk4
@@ -374,6 +374,8 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 			//configArray.push_back(acc);
 			//configArray.push_back(gyr);
 			//device->setOutputConfiguration(configArray);
+
+			std::cout << configArray
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
     {
