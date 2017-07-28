@@ -428,7 +428,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			foundAck = true;
 				}
 				else if ((*it).getMessageId() == XMID_MtData2) {
-					printf("MTData2\n");
+					printf("MTData2 kuya\n");
 	  			packet.setMessage((*it));
 	  			packet.setDeviceId(mtPort->deviceId());
 	  			foundAck = true;
@@ -469,10 +469,11 @@ void test_IMU(){
 		XsOutputMode outputMode = XOM_Orientation;
 		XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion;
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
-		//while(1)
+		while(1)
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
-		  std::cout  //<< "\r"
+			printf("\n");
+			std::cout  << "\r"
 			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
 			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
 			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
@@ -483,9 +484,6 @@ void test_IMU(){
 			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
 			   ;
 		  }
-
-			printf("\n");
-			std::cout << outputMode << "\n";
 	}
 	else if(mode==2){
 		XsOutputMode outputMode = XOM_Calibrated;
