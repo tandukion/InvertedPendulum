@@ -363,8 +363,12 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 
 			/* set with OutputConfiguration --> MTData2 */
 			XsOutputConfiguration quat(XDI_Quaternion, 100);
+			XsOutputConfiguration acc(XDI_Acceleration, 100);
+			XsOutputConfiguration gyr(XDI_RateOfTurn, 100);
 			XsOutputConfigurationArray configArray;
 			configArray.push_back(quat);
+			configArray.push_back(acc);
+			configArray.push_back(gyr);
 			device->setOutputConfiguration(configArray);
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
