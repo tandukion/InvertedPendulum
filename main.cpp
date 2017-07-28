@@ -684,6 +684,9 @@ void test_IMU(){
 			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
 			   ;
 		  }
+
+			printf("\n");
+			std::cout << outputMode << "\n";
 	}
 	else if(mode==2){
 		XsOutputMode outputMode = XOM_Calibrated;
@@ -703,9 +706,10 @@ void test_IMU(){
 			<< ", Acc[0]:" << calData.m_acc.value(0)
 			;
 		  }
+
+			printf("\n");
+			std::cout << outputMode << "\n";
 	}
-	printf("\n");
-	std::cout << outputMode << "\n";
 }
 
 
