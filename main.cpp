@@ -363,10 +363,11 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
     {
-      XsOutputConfiguration quat(XDI_Quaternion, 100);
-      XsOutputConfigurationArray configArray;
-      configArray.push_back(quat);
-      device->setOutputConfiguration(configArray);
+			/* Default Mode configuration */
+      //XsOutputConfiguration quat(XDI_Quaternion, 100);
+      //XsOutputConfigurationArray configArray;
+      //configArray.push_back(quat);
+      //device->setOutputConfiguration(configArray);
     }
 
   // Put the device in measurement mode
@@ -417,10 +418,16 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			foundAck = true;
 				}
 
-														if (packet.containsCalibratedAcceleration())
-															printf("contain calData\n");
-														else
-															printf("not contain calData\n");
+				if (packet.containsOrientation())
+					printf("contain Orientation\n");
+				if (packet.containsCalibratedData())
+					printf("contain calibrated Data\n");
+				if (packet.containsCalibratedAcceleration())
+					printf("contain calibrated Acc\n");
+				if (packet.containsCalibratedGyroscopeData())
+					printf("contain calibrated Gyroscope\n");
+				if (packet.containsCalibratedMagneticField())
+					printf("contain calibrated Magnetometer\n");
 
 				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
 					// Get the quaternion data
@@ -663,7 +670,7 @@ void test_IMU(){
 		XsOutputMode outputMode = XOM_Orientation;
 		XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion;
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
-		while(1)
+		//while(1)
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 		  std::cout  << "\r"
