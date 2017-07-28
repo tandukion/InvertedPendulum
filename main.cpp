@@ -634,7 +634,7 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
       strcat (str,"_");
       strcat (str,message);
     }
-    strcat(str,".txt");
+    strcat(str,".csv");
 
     fp = fopen(str,"w");  // "w" : create file for writing
     if (fp == NULL){
@@ -646,24 +646,24 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
 
 
   else if (mode==1){
-    sprintf(str, "%d\t",index);//TimeData[i]);
+    sprintf(str, "%d",index);//TimeData[i]);
     fputs(str, fp);
     for (j = 0; j< NUM_ADC; j++){
       for (k = 0; k< NUM_ADC_PORT; k++){
 				//sprintf(str, "%10lu\t", SensorVal[index][j][k]);
-				sprintf(str, "%d\t", SensorVal[index][j][k]);
+				sprintf(str, ",%d", SensorVal[index][j][k]);
 				fputs(str, fp);
       }
     }
 
 		// converting float to string
 		for (j=0;j<3;j++){
-			std::string strs = std::to_string(calData.m_acc.value(j)) + "\t";
+			std::string strs = ","+ std::to_string(calData.m_acc.value(j));
 			//sprintf(str, "%d\t", calData.m_acc.value(j));
 			fputs(strs.c_str(), fp);
 		}
 		for (j=0;j<3;j++){
-			std::string strs = std::to_string(calData.m_gyr.value(j)) + "\t";
+			std::string strs = ","+ std::to_string(calData.m_gyr.value(j));
 			//sprintf(str, "%d\t", calData.m_gyr.value(j));
 			fputs(strs.c_str(), fp);
 		}
