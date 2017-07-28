@@ -10,7 +10,7 @@ OBJECTS := $(CPP_FILES:.cpp=.o)
 
 HEADERS = $(wildcard *.h)
 INCLUDE = -I. -Iinclude -Isrc
-CFLAGS =$(INCLUDE) -include config.h
+CFLAGS =$(INCLUDE) -w -include config.h
 CXXFLAGS =-std=c++11 $(CFLAGS)
 LFLAGS = -Llib -lgpiommap -lxdevice -lxcommunication -lxstypes -lpthread -lrt -ldl
 
