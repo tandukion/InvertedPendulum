@@ -409,7 +409,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			lpacket.setDeviceId(mtPort->deviceId(), 0);
 	  			lpacket.setDataFormat(outputMode, outputSettings,0);//lint !e534
 
-					if (lpacket.containsCalibratedData(0))
+					if (lpacket.containsCalibratedAcceleration())
 						printf("contain calData\n");
 					else
 						printf("not contain calData\n");
