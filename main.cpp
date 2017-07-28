@@ -337,7 +337,7 @@ void init_IMU(DeviceClass *device, XsPortInfo *mtPort, char *portName, int baudR
 // Output: - *device : updated DeviceClass for the Xsens
 //         - *mtPort : updated Port name and baudrate
 /********************************************************************/
-void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings, XsOutputConfigurationArray config){
+void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings){
 
   // Put the device in configuration mode
   //std::cout << "Putting device into configuration mode..." << std::endl;
@@ -364,7 +364,7 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 			/* set with OutputConfiguration --> MTData2 */
 			XsOutputConfiguration quat(XDI_Quaternion, 100);
 			XsOutputConfigurationArray configArray;
-			onfigArray.push_back(quat);
+			configArray.push_back(quat);
 			device->setOutputConfiguration(configArray);
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
