@@ -337,7 +337,7 @@ void init_IMU(DeviceClass *device, XsPortInfo *mtPort, char *portName, int baudR
 // Output: - *device : updated DeviceClass for the Xsens
 //         - *mtPort : updated Port name and baudrate
 /********************************************************************/
-void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings){
+void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings, XsOutputConfigurationArray config){
 
   // Put the device in configuration mode
   //std::cout << "Putting device into configuration mode..." << std::endl;
@@ -358,8 +358,14 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
       // XsOutputMode outputMode = XOM_Orientation; // output orientation data
       // XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion; // output orientation data as quaternion
 
-      // set the device configuration
-      device->setDeviceMode(outputMode, outputSettings);
+      /* set the device configuration with outputMode --> MTData */
+      //device->setDeviceMode(outputMode, outputSettings);
+
+			/* set with OutputConfiguration --> MTData2 */
+			XsOutputConfiguration quat(XDI_Quaternion, 100);
+			XsOutputConfigurationArray configArray;
+			onfigArray.push_back(quat);
+			device->setOutputConfiguration(configArray);
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
     {
@@ -404,6 +410,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 				// Retrieve a packet
 				XsDataPacket packet;
 				if ((*it).getMessageId() == XMID_MtData) {
+					printf("MTData\n");
 	  			LegacyDataPacket lpacket(1, false);
 	  			lpacket.setMessage((*it));
 	  			lpacket.setXbusSystem(false);
@@ -413,6 +420,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			foundAck = true;
 				}
 				else if ((*it).getMessageId() == XMID_MtData2) {
+					printf("MTData2\n");
 	  			packet.setMessage((*it));
 	  			packet.setDeviceId(mtPort->deviceId());
 	  			foundAck = true;
@@ -443,6 +451,71 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 
 }
 
+
+void test_IMU(){
+	std::cout << "Looping Printing by accessing function each time.." << std::endl;
+	int mode;
+	printf("Output Mode <1:Orientation><2:calibratedData> : ");
+	scanf ("%d",&mode);
+	if (mode==1){
+		XsOutputMode outputMode = XOM_Orientation;
+		XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion;
+		config_IMU(&device,&mtPort, outputMode, outputSettings);
+		//while(1)
+		  {
+		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+		  std::cout  //<< "\r"
+			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
+			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
+			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
+			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
+		    ;
+		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
+			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
+			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
+			   ;
+		  }
+
+			printf("\n");
+			std::cout << outputMode << "\n";
+	}
+	else if(mode==2){
+		XsOutputMode outputMode = XOM_Calibrated;
+		XsOutputSettings outputSettings = XOS_CalibratedMode_All;
+
+		double acc;
+		config_IMU(&device,&mtPort, outputMode, outputSettings);
+		//while(1)
+
+		  {
+		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+			acc=calData.m_acc.value(0);
+		  std::cout  //<< "\r"
+			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
+			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
+			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
+			<< "size Acc:" << calData.m_acc.size()
+			<< ", Acc[0]:" << calData.m_acc.value(0)
+			;
+		  }
+
+			printf("\n");
+			std::cout << outputMode << "\n";
+
+		  std::cout  //<< "\r"
+			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
+			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
+			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
+			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
+		    ;
+		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
+			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
+			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
+			   ;
+
+				 			printf("\n");
+	}
+}
 
 /*************************************************************/
 /**                    INIT FUNCTIONS                       **/
@@ -657,70 +730,6 @@ void test_sensor (int SampleNum){
   //return (Value);
 }
 
-void test_IMU(){
-	std::cout << "Looping Printing by accessing function each time.." << std::endl;
-	int mode;
-	printf("Output Mode <1:Orientation><2:calibratedData> : ");
-	scanf ("%d",&mode);
-	if (mode==1){
-		XsOutputMode outputMode = XOM_Orientation;
-		XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion;
-		config_IMU(&device,&mtPort, outputMode, outputSettings);
-		//while(1)
-		  {
-		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
-		  std::cout  //<< "\r"
-			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
-			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
-			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
-			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
-		    ;
-		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
-			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
-			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
-			   ;
-		  }
-
-			printf("\n");
-			std::cout << outputMode << "\n";
-	}
-	else if(mode==2){
-		XsOutputMode outputMode = XOM_Calibrated;
-		XsOutputSettings outputSettings = XOS_CalibratedMode_All;
-
-		double acc;
-		config_IMU(&device,&mtPort, outputMode, outputSettings);
-		//while(1)
-
-		  {
-		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
-			acc=calData.m_acc.value(0);
-		  std::cout  //<< "\r"
-			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
-			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
-			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
-			<< "size Acc:" << calData.m_acc.size()
-			<< ", Acc[0]:" << calData.m_acc.value(0)
-			;
-		  }
-
-			printf("\n");
-			std::cout << outputMode << "\n";
-
-		  std::cout  //<< "\r"
-			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
-			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
-			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
-			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
-		    ;
-		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
-			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
-			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
-			   ;
-
-				 			printf("\n");
-	}
-}
 
 
 /*======  Test one Muscle with Specific Pressure =======*/
