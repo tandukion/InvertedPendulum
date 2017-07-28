@@ -408,14 +408,14 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			lpacket.setXbusSystem(false);
 	  			lpacket.setDeviceId(mtPort->deviceId(), 0);
 	  			lpacket.setDataFormat(outputMode, outputSettings,0);//lint !e534
-
-					if (lpacket.containsCalibratedAcceleration())
-						printf("contain calData\n");
-					else
-						printf("not contain calData\n");
-
 	  			XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
 	  			foundAck = true;
+
+										if (packet.containsCalibratedAcceleration())
+											printf("contain calData\n");
+										else
+											printf("not contain calData\n");
+
 				}
 				else if ((*it).getMessageId() == XMID_MtData2) {
 	  			packet.setMessage((*it));
