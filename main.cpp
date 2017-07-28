@@ -410,6 +410,11 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			lpacket.setDataFormat(outputMode, outputSettings,0);//lint !e534
 	  			XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
 	  			foundAck = true;
+
+						if (lpacket.containsCalibratedData())
+							printf("contain calData\n");
+						else
+							printf("not contain calData\n");
 				}
 				else if ((*it).getMessageId() == XMID_MtData2) {
 	  			packet.setMessage((*it));
@@ -418,21 +423,16 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 				}
 
 				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
-					if (packet.containsOrientation())
-						printf("contain calData\n");
-					else
-						printf("not contain calData\n");
-					*calData = packet.calibratedData();
 					// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
 					// Convert packet to euler
 					*euler = packet.orientationEuler();
 				}
-				else if (outputMode==XOM_Calibrated) {
+				else if (outputMode==XOM_Calibrated) {/*
 					if (packet.containsCalibratedData())
 						printf("contain calData\n");
 					else
-						printf("not contain calData\n");
+						printf("not contain calData\n");*/
 					*calData = packet.calibratedData();
 				}
 		 	}
