@@ -359,6 +359,10 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
       // XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion; // output orientation data as quaternion
 
       /* set the device configuration with outputMode --> MTData */
+			XsOutputConfiguration none(XDI_None, 100);
+			XsOutputConfigurationArray configArray;
+			configArray.push_back(none);
+			device->setOutputConfiguration(configArray);
       device->setDeviceMode(outputMode, outputSettings);
 
 			/* set with OutputConfiguration --> MTData2 */
