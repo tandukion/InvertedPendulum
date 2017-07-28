@@ -375,7 +375,6 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 			//configArray.push_back(gyr);
 			//device->setOutputConfiguration(configArray);
 
-			std::cout << configArray
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
     {
