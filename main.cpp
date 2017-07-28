@@ -421,7 +421,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 															printf("contain calData\n");
 														else
 															printf("not contain calData\n");
-															
+
 				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
 					// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
@@ -775,7 +775,7 @@ int main(int argc, char *argv[]) {
 	init_sensor();
 
 	init_IMU(&device,&mtPort,PORTNAME,BAUDRATE);
-	config_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS);
+	//config_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS);
 
 	int i,j,k;
 	unsigned int ch_num;
