@@ -411,7 +411,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
 	  			foundAck = true;
 
-						if (lpacket.containsCalibratedData())
+						if (lpacket.containsCalibratedData(0))
 							printf("contain calData\n");
 						else
 							printf("not contain calData\n");
