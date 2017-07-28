@@ -33,6 +33,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 
 #ifdef __GNUC__
 #include "conio.h" // for non ANSI _kbhit() and _getch()
@@ -347,7 +348,7 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
   mtPort->setDeviceId(device->getDeviceId());
 
   // Print information about detected MTi / MTx / MTmk4 device
-  std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
+  //std::cout << "Found a device with id: " << mtPort->deviceId().toString().toStdString() << " @ port: " << mtPort->portName().toStdString() << ", baudrate: " << mtPort->baudrate() << std::endl;
   //std::cout << "Device: " << device->getProductCode().toStdString() << " opened." << std::endl;
 
   // Configure the device. Note the differences between MTix and MTmk4
@@ -359,30 +360,29 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
       // XsOutputSettings outputSettings = XOS_OrientationMode_Quaternion; // output orientation data as quaternion
 
       /* set the device configuration with outputMode --> MTData */
-			XsOutputConfiguration none(XDI_None, 100);
-			XsOutputConfigurationArray configArray;
-			configArray.push_back(none);
-			device->setOutputConfiguration(configArray);
       //device->setDeviceMode(outputMode, outputSettings);
-
-			/* set with OutputConfiguration --> MTData2 */
-			//XsOutputConfiguration quat(XDI_Quaternion, 100);
-			//XsOutputConfiguration acc(XDI_Acceleration, 100);
-			//XsOutputConfiguration gyr(XDI_RateOfTurn, 100);
-			//XsOutputConfigurationArray configArray;
-			//configArray.push_back(quat);
-			//configArray.push_back(acc);
-			//configArray.push_back(gyr);
-			//device->setOutputConfiguration(configArray);
-
     }
   else if (mtPort->deviceId().isMtMk4() || mtPort->deviceId().isFmt_X000())
     {
-			/* Default Mode configuration */
-      //XsOutputConfiguration quat(XDI_Quaternion, 100);
-      //XsOutputConfigurationArray configArray;
-      //configArray.push_back(quat);
-      //device->setOutputConfiguration(configArray);
+
+			/* set the device configuration with outputMode --> MTData */
+			/*
+			XsOutputConfigurationArray configArray;
+      XsOutputConfiguration none(XDI_None, 100);
+      configArray.push_back(none);
+      device->setOutputConfiguration(configArray);
+      device->setDeviceMode(outputMode, outputSettings);
+			*/
+
+			/* set with OutputConfiguration --> MTData2 */
+			XsOutputConfigurationArray configArray;
+			//XsOutputConfiguration quat(XDI_Quaternion, 100);
+			XsOutputConfiguration acc(XDI_Acceleration, 100);
+			XsOutputConfiguration gyr(XDI_RateOfTurn, 100);
+			//configArray.push_back(quat);
+			configArray.push_back(acc);
+			configArray.push_back(gyr);
+			device->setOutputConfiguration(configArray);
     }
 
   // Put the device in measurement mode
@@ -419,7 +419,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 				// Retrieve a packet
 				XsDataPacket packet;
 				if ((*it).getMessageId() == XMID_MtData) {
-					printf("MTData\n");
+					//printf("MTData\n");
 	  			LegacyDataPacket lpacket(1, false);
 	  			lpacket.setMessage((*it));
 	  			lpacket.setXbusSystem(false);
@@ -429,12 +429,13 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			foundAck = true;
 				}
 				else if ((*it).getMessageId() == XMID_MtData2) {
-					printf("MTData2\n");
+					//printf("MTData2\n");
 	  			packet.setMessage((*it));
 	  			packet.setDeviceId(mtPort->deviceId());
 	  			foundAck = true;
 				}
 
+				/*
 				if (packet.containsOrientation())
 					printf("contain Orientation\n");
 				if (packet.containsCalibratedData())
@@ -445,16 +446,13 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 					printf("contain calibrated Gyroscope\n");
 				if (packet.containsCalibratedMagneticField())
 					printf("contain calibrated Magnetometer\n");
-
-				//if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
-					// Get the quaternion data
+				*/
+				// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
 					// Convert packet to euler
 					*euler = packet.orientationEuler();
-				//}
-				//else if (outputMode==XOM_Calibrated) {
+
 					*calData = packet.calibratedData();
-				//}
 		 	}
 	} while (!foundAck);
 
@@ -492,35 +490,21 @@ void test_IMU(){
 
 		double acc;
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
-		//while(1)
-
+		while(1)
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
-			acc=calData.m_acc.value(0);
-		  std::cout  //<< "\r"
-			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
-			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
-			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
-			<< "size Acc:" << calData.m_acc.size()
-			<< ", Acc[0]:" << calData.m_acc.value(0)
+		  std::cout  << "\r"
+			   	<< "AccX:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_acc.value(0)
+			    << ", AccY:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_acc.value(1)
+			    << ", AccZ:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_acc.value(2)
+
+			   	<< ",   GyrX:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_gyr.value(0)
+			    << ", GyrY:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_gyr.value(1)
+			    << ", GyrZ:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_gyr.value(2)
 			;
 		  }
 
 			printf("\n");
-			std::cout << outputMode << "\n";
-
-		  std::cout  //<< "\r"
-			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
-			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
-			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
-			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
-		    ;
-		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
-			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
-			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
-			   ;
-
-				 			printf("\n");
 	}
 }
 
@@ -626,7 +610,7 @@ double ADCtoAngle (unsigned long ADCValue){
 //               [2] close file
 // Output :
 /***************************************************************/
-int logging (int mode, const char *message, int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT]){
+int logging (int mode, const char *message, int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData calData){
 //int logging(int mode, const char *message){
   static FILE *fp;
   char str[256];
@@ -666,11 +650,23 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
     fputs(str, fp);
     for (j = 0; j< NUM_ADC; j++){
       for (k = 0; k< NUM_ADC_PORT; k++){
-	//sprintf(str, "%10lu\t", SensorVal[index][j][k]);
-	  sprintf(str, "%d\t", SensorVal[index][j][k]);
-	  fputs(str, fp);
+				//sprintf(str, "%10lu\t", SensorVal[index][j][k]);
+				sprintf(str, "%d\t", SensorVal[index][j][k]);
+				fputs(str, fp);
       }
     }
+
+		// converting float to string
+		for (j=0;j<3;j++){
+			std::string strs = std::to_string(calData.m_acc.value(j)) + "\t";
+			//sprintf(str, "%d\t", calData.m_acc.value(j));
+			fputs(strs.c_str(), fp);
+		}
+		for (j=0;j<3;j++){
+			std::string strs = std::to_string(calData.m_gyr.value(j)) + "\t";
+			//sprintf(str, "%d\t", calData.m_gyr.value(j));
+			fputs(strs.c_str(), fp);
+		}
     sprintf(str, "\n");
     fputs(str, fp);
   }
@@ -684,25 +680,27 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
 
 /* start and only open file for log */
 void startlog(const char* message){
-  logging(0,message,NULL,NULL);
+	XsCalibratedData dummy;
+  logging(0,message,NULL,NULL,dummy);
 }
 
 /* input log on specific index */
-void entrylog(int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT]){
-  logging(1,"",index,SensorVal);
+void entrylog(int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData calData){
+  logging(1,"",index,SensorVal,calData);
 }
 
 /* close file */
 void endlog() {
-  logging(2,"",NULL,NULL);
+	XsCalibratedData dummy;
+  logging(2,"",NULL,NULL,dummy);
 }
 
 /* */
-void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT]){
+void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData calData){
   int i;
   startlog(message);
   for (i=0;i<SampleNum;i++){
-    entrylog (i,SensorVal);
+    entrylog (i,SensorVal,calData);
   }
   endlog();
 }
@@ -717,7 +715,7 @@ void test_sensor (int SampleNum){
   int index,j,k;
   static unsigned long Value[MAX_SAMPLE_NUM][NUM_ADC][NUM_ADC_PORT];
 
-  startlog("test_sensor");
+  //startlog("test_sensor");
 
   for(index=0;index<SampleNum;index++){
     read_sensor_all(index,Value);
@@ -730,14 +728,12 @@ void test_sensor (int SampleNum){
     printf ("-------------------\n");
     /**/
     // logging into file
-    entrylog(index,Value);
+    //entrylog(index,Value);
   }
-  endlog();
+  //endlog();
 
   //return (Value);
 }
-
-
 
 /*======  Test one Muscle with Specific Pressure =======*/
 void test_valve (){
@@ -816,6 +812,9 @@ int main(int argc, char *argv[]) {
 	init_IMU(&device,&mtPort,PORTNAME,BAUDRATE);
 	//config_IMU(&device,&mtPort, DEFAULT_OUTPUT_MODE, DEFAULT_OUTPUT_SETTINGS);
 
+	XsOutputMode outputMode = XOM_Calibrated;
+	XsOutputSettings outputSettings = XOS_CalibratedMode_All;
+
 	int i,j,k;
 	unsigned int ch_num;
 	for (i = 0; i < NUM_OF_CHANNELS; i++)
@@ -842,16 +841,30 @@ int main(int argc, char *argv[]) {
 
 	    /* this is for direct reading from main, to test reading at once in main loop */
 	    /**/
+
+
+			config_IMU(&device,&mtPort, outputMode, outputSettings);
 	    for (i=0;i<SampleNum;i++){
 	      read_sensor_all(i,SensorData);
+				measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+
+				// printing
+				printf("[%d]\t",i);
 	      for (j = 0; j< NUM_ADC; j++){
-		for (k = 0; k< NUM_ADC_PORT; k++){
-		  printf("[%d][%d][%d] %lu\n",i,j,k, SensorData[i][j][k]);
-		}
+					for (k = 0; k< NUM_ADC_PORT; k++){
+					  printf("%lu\t", SensorData[i][j][k]);
+					}
 	      }
+				for (j=0;j<3;j++){
+					printf("%.3f\t", calData.m_acc.value(j));
+				}
+				for (j=0;j<3;j++){
+					printf("%.3f\t", calData.m_gyr.value(j));
+				}
+				printf("\n");
 	    }
 	    printf ("-------------------\n");
-	    fulllog("",SensorData);
+	    fulllog("adc_acc_gyr",SensorData,calData);
 	    /**/
 	    break;
 		case '2':
