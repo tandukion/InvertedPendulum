@@ -418,6 +418,11 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 				}
 
 				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
+					if (packet.containsOrientation())
+						printf("contain calData\n");
+					else
+						printf("not contain calData\n");
+					*calData = packet.calibratedData();
 					// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
 					// Convert packet to euler
