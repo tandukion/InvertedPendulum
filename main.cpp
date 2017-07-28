@@ -424,6 +424,10 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 					*euler = packet.orientationEuler();
 				}
 				else if (outputMode==XOM_Calibrated) {
+					if (packet.containsCalibratedData())
+						printf("contain calData\n");
+					else
+						printf("not contain calData\n");
 					*calData = packet.calibratedData();
 				}
 		 	}
