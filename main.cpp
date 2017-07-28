@@ -429,19 +429,15 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 				if (packet.containsCalibratedMagneticField())
 					printf("contain calibrated Magnetometer\n");
 
-				if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
+				//if ((outputMode==XOM_Orientation)&&(outputSettings==XOS_OrientationMode_Quaternion)) {
 					// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
 					// Convert packet to euler
 					*euler = packet.orientationEuler();
-				}
-				else if (outputMode==XOM_Calibrated) {/*
-					if (packet.containsCalibratedData())
-						printf("contain calData\n");
-					else
-						printf("not contain calData\n");*/
+				//}
+				//else if (outputMode==XOM_Calibrated) {
 					*calData = packet.calibratedData();
-				}
+				//}
 		 	}
 	} while (!foundAck);
 
@@ -695,6 +691,7 @@ void test_IMU(){
 		double acc;
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
 		//while(1)
+
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 			acc=calData.m_acc.value(0);
@@ -709,6 +706,19 @@ void test_IMU(){
 
 			printf("\n");
 			std::cout << outputMode << "\n";
+
+		  std::cout  //<< "\r"
+			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
+			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
+			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
+			    << ",Z:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.z()
+		    ;
+		  std::cout << ",Roll:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.roll()
+			    << ",Pitch:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.pitch()
+			    << ",Yaw:" << std::setw(7) << std::fixed << std::setprecision(2) << euler.yaw()
+			   ;
+
+				 			printf("\n");
 	}
 }
 
