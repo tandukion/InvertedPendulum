@@ -673,7 +673,7 @@ void test_IMU(){
 		//while(1)
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
-		  std::cout  << "\r"
+		  std::cout  //<< "\r"
 			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
 			    << ",X:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.x()
 			    << ",Y:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.y()
@@ -695,7 +695,7 @@ void test_IMU(){
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 			acc=calData.m_acc.value(0);
-		  std::cout  << "\r"
+		  std::cout  //<< "\r"
 			//    << "AccX:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(0)
 			//    << ",AccY:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(1)
 			//    << ",AccZ:" << std::setw(7) << std::fixed << std::setprecision(2) << calData.m_acc.value(2)
@@ -704,6 +704,8 @@ void test_IMU(){
 			;
 		  }
 	}
+	printf("\n");
+	std::cout << outputMode << "\n";
 }
 
 
