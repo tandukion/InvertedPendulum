@@ -413,7 +413,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 						printf("contain calData\n");
 					else
 						printf("not contain calData\n");
-						
+
 	  			XsDataPacket_assignFromLegacyDataPacket(&packet, &lpacket, 0);
 	  			foundAck = true;
 				}
@@ -685,7 +685,7 @@ void test_IMU(){
 
 		double acc;
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
-		while(1)
+		//while(1)
 		  {
 		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 			acc=calData.m_acc.value(0);
