@@ -363,7 +363,7 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 			XsOutputConfigurationArray configArray;
 			configArray.push_back(none);
 			device->setOutputConfiguration(configArray);
-      device->setDeviceMode(outputMode, outputSettings);
+      //device->setDeviceMode(outputMode, outputSettings);
 
 			/* set with OutputConfiguration --> MTData2 */
 			//XsOutputConfiguration quat(XDI_Quaternion, 100);
@@ -428,7 +428,7 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 	  			foundAck = true;
 				}
 				else if ((*it).getMessageId() == XMID_MtData2) {
-					printf("MTData2 kuya\n");
+					printf("MTData2\n");
 	  			packet.setMessage((*it));
 	  			packet.setDeviceId(mtPort->deviceId());
 	  			foundAck = true;
