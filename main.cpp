@@ -83,7 +83,7 @@
 /**                   GLOBAL VARIABLES                      **/
 /*************************************************************/
 
-int SampleNum = 3000;
+int SampleNum = 5000;
 unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
 
 struct IMUDataArray{
