@@ -666,12 +666,12 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
 
 		// converting float to string
 		for (j=0;j<3;j++){
-			std::string strs = ","+ std::to_string(calData->m_acc.value(j));
+			std::string strs = ","+ std::to_string(calData[index].m_acc.value(j));
 			//sprintf(str, "%d\t", calData.m_acc.value(j));
 			fputs(strs.c_str(), fp);
 		}
 		for (j=0;j<3;j++){
-			std::string strs = ","+ std::to_string(calData->m_gyr.value(j));
+			std::string strs = ","+ std::to_string(calData[index].m_gyr.value(j));
 			//sprintf(str, "%d\t", calData.m_gyr.value(j));
 			fputs(strs.c_str(), fp);
 		}
