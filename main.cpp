@@ -85,7 +85,7 @@
 
 unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
 
-int SampleNum = 3000;
+int SampleNum = 10000;
 
 /* Variable for IMU Data */
 DeviceClass device;
@@ -849,6 +849,7 @@ int main(int argc, char *argv[]) {
 				measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 
 				// printing
+				printf("\r");
 				printf("[%d]\t",i);
 	      for (j = 0; j< NUM_ADC; j++){
 					for (k = 0; k< NUM_ADC_PORT; k++){
@@ -861,8 +862,10 @@ int main(int argc, char *argv[]) {
 				for (j=0;j<3;j++){
 					printf("%.3f\t", calData.m_gyr.value(j));
 				}
-				printf("\n");
+				//printf("\n");
 	    }
+
+
 	    printf ("-------------------\n");
 	    fulllog("adc_acc_gyr",SensorData,calData);
 	    /**/
@@ -888,71 +891,6 @@ int main(int argc, char *argv[]) {
 	  printf("4 : Testing all Muscle/Valves sequentially\n");
 	}
 
-
-
-	/*
-	for (i = 0; i < SampleNum; i++){
-	  if (i > 2000){
-		for (ch_num = 0; ch_num< 16; ch_num++){
-			setState(ch_num, 0); // exhaust
-		}
-	    //setState(ValveNum, 0); // exhaust
-
-
-
-	  }else if (i > 1000){
-		for (ch_num = 0; ch_num< 16; ch_num++){
-			setState(ch_num, 0.5); // supply
-		}
-	    //setState(ValveNum, 0.5); // supply
-	  }
-	  for (j = 0; j< NUM_ADC; j++){
-		  tmp_val0=read_sensor(j,tmp_val);
-		  for (k = 0; k< NUM_ADC_PORT; k++){
-	  	  	  SensorData[i][j][k]=tmp_val0[k];
-	  	  	  //printf("%d\n", tmp_val0[k]);
-	  	  }
-	  }
-	  printf("%10lu\n", SensorData[i][1][6]);
-	  TimeData[i] = clock();
-	  usleep(100);
-	}
-	*/
-
-
-	// ============= File Writing =========
-	/*
-	FILE *fp;
-	char str[100];
-
-	time_t now = time(NULL);
-	struct tm *pnow = localtime (&now);
-
-	sprintf (
-
-	fp = fopen("data/test_.txt","w");
-	if (fp == NULL){
-	  printf("File open error\n");
-	  return;
-	}
-
-	for (i = 0; i < SampleNum; i++){
-	  sprintf(str, "%d\t", i);//TimeData[i]);
-	  fputs(str, fp);
-	  for (j = 0; j< NUM_ADC; j++){
-		for (k = 0; k< NUM_ADC_PORT; k++){
-		  sprintf(str, "%10lu\t", SensorData[i][j][k]);
-		  fputs(str, fp);
-		}
-	  }
-	  sprintf(str, "\n");
-	  fputs(str, fp);
-	}
-
-
-	fclose(fp);
-
-	*/
 
 	return 0;
 }
