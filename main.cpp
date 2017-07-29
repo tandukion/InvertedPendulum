@@ -83,9 +83,17 @@
 /**                   GLOBAL VARIABLES                      **/
 /*************************************************************/
 
+int SampleNum = 3000;
 unsigned long SensorValue[NUM_ADC][NUM_ADC_PORT];
 
-int SampleNum = 10000;
+struct IMUDataArray{
+	XsCalibratedData calData[MAX_SAMPLE_NUM];
+	XsQuaternion quaternion[MAX_SAMPLE_NUM];
+	XsEuler euler[MAX_SAMPLE_NUM];
+};
+
+IMUDataArray IMUData;
+
 
 /* Variable for IMU Data */
 DeviceClass device;
@@ -610,7 +618,7 @@ double ADCtoAngle (unsigned long ADCValue){
 //               [2] close file
 // Output :
 /***************************************************************/
-int logging (int mode, const char *message, int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData calData){
+int logging (int mode, const char *message, int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData *calData){
 //int logging(int mode, const char *message){
   static FILE *fp;
   char str[256];
@@ -658,12 +666,12 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
 
 		// converting float to string
 		for (j=0;j<3;j++){
-			std::string strs = ","+ std::to_string(calData.m_acc.value(j));
+			std::string strs = ","+ std::to_string(calData->m_acc.value(j));
 			//sprintf(str, "%d\t", calData.m_acc.value(j));
 			fputs(strs.c_str(), fp);
 		}
 		for (j=0;j<3;j++){
-			std::string strs = ","+ std::to_string(calData.m_gyr.value(j));
+			std::string strs = ","+ std::to_string(calData->m_gyr.value(j));
 			//sprintf(str, "%d\t", calData.m_gyr.value(j));
 			fputs(strs.c_str(), fp);
 		}
@@ -680,23 +688,23 @@ int logging (int mode, const char *message, int  index, unsigned long SensorVal[
 
 /* start and only open file for log */
 void startlog(const char* message){
-	XsCalibratedData dummy;
+	XsCalibratedData *dummy;
   logging(0,message,NULL,NULL,dummy);
 }
 
 /* input log on specific index */
-void entrylog(int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData calData){
+void entrylog(int  index, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData *calData){
   logging(1,"",index,SensorVal,calData);
 }
 
 /* close file */
 void endlog() {
-	XsCalibratedData dummy;
+	XsCalibratedData *dummy;
   logging(2,"",NULL,NULL,dummy);
 }
 
 /* */
-void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData calData){
+void fulllog(const char* message, unsigned long SensorVal[][NUM_ADC][NUM_ADC_PORT], XsCalibratedData *calData){
   int i;
   startlog(message);
   for (i=0;i<SampleNum;i++){
@@ -848,6 +856,8 @@ int main(int argc, char *argv[]) {
 	      read_sensor_all(i,SensorData);
 				measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
 
+				IMUData.calData[i] = calData;
+
 				// printing
 				printf("\r");
 				printf("[%d]\t",i);
@@ -857,17 +867,17 @@ int main(int argc, char *argv[]) {
 					}
 	      }
 				for (j=0;j<3;j++){
-					printf("%.3f\t", calData.m_acc.value(j));
+					printf("%.3f\t", IMUData.calData[i].m_acc.value(j));
 				}
 				for (j=0;j<3;j++){
-					printf("%.3f\t", calData.m_gyr.value(j));
+					printf("%.3f\t", IMUData.calData[i].m_gyr.value(j));
 				}
 				//printf("\n");
 	    }
 
 
 	    printf ("-------------------\n");
-	    fulllog("adc_acc_gyr",SensorData,calData);
+	    fulllog("adc_acc_gyr",SensorData,IMUData.calData);
 	    /**/
 	    break;
 		case '2':
