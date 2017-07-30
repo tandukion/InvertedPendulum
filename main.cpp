@@ -90,6 +90,7 @@ struct IMUDataArray{
 	XsCalibratedData calData[MAX_SAMPLE_NUM];
 	XsQuaternion quaternion[MAX_SAMPLE_NUM];
 	XsEuler euler[MAX_SAMPLE_NUM];
+	unsigned int sample_time[MAX_SAMPLE_NUM];
 };
 
 IMUDataArray IMUData;
@@ -101,6 +102,7 @@ XsPortInfo mtPort;
 XsQuaternion quaternion;
 XsEuler euler;
 XsCalibratedData calData;
+unsigned int sample_time;
 
 /* Xsens IMU Configuration */
 char portName[20] = "/dev/ttyUSB0";
@@ -387,9 +389,12 @@ void config_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode
 			//XsOutputConfiguration quat(XDI_Quaternion, 100);
 			XsOutputConfiguration acc(XDI_Acceleration, 100);
 			XsOutputConfiguration gyr(XDI_RateOfTurn, 100);
+			XsOutputConfiguration sampletime(XDI_SampleTimeFine, 100);
+
 			//configArray.push_back(quat);
 			configArray.push_back(acc);
 			configArray.push_back(gyr);
+			configArray.push_back(sampletime);
 			device->setOutputConfiguration(configArray);
     }
 
@@ -412,7 +417,7 @@ void setOutput_IMU();
 //         - euler
 /********************************************************************/
 
-void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings, XsQuaternion *quaternion, XsEuler *euler, XsCalibratedData *calData){
+void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMode, XsOutputSettings outputSettings, XsQuaternion *quaternion, XsEuler *euler, XsCalibratedData *calData, unsigned int *sample_time){
 
   XsByteArray data;
   XsMessageArray msgs;
@@ -454,13 +459,18 @@ void measure_IMU(DeviceClass *device, XsPortInfo *mtPort, XsOutputMode outputMod
 					printf("contain calibrated Gyroscope\n");
 				if (packet.containsCalibratedMagneticField())
 					printf("contain calibrated Magnetometer\n");
+				if (packet.containsSampleTimeCoarse())
+				  printf("contain SampleTimeCoarse\n");
 				*/
 				// Get the quaternion data
 					*quaternion = packet.orientationQuaternion();
 					// Convert packet to euler
 					*euler = packet.orientationEuler();
-
+					// Get calibrated Data
 					*calData = packet.calibratedData();
+
+					// Get Sample Time Coarse
+					*sample_time = packet.sampleTimeFine();
 		 	}
 	} while (!foundAck);
 
@@ -478,7 +488,7 @@ void test_IMU(){
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
 		while(1)
 		  {
-		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData,&sample_time);
 			printf("\n");
 			std::cout  << "\r"
 			    << "W:" << std::setw(5) << std::fixed << std::setprecision(2) << quaternion.w()
@@ -500,7 +510,7 @@ void test_IMU(){
 		config_IMU(&device,&mtPort, outputMode, outputSettings);
 		while(1)
 		  {
-		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+		  measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData,&sample_time);
 		  std::cout  << "\r"
 			   	<< "AccX:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_acc.value(0)
 			    << ", AccY:" << std::setw(7) << std::fixed << std::setprecision(4) << calData.m_acc.value(1)
@@ -840,6 +850,9 @@ int main(int argc, char *argv[]) {
 	  setState(ch_num, 0);
 	}
 
+
+	clock_t laps1,laps2;
+
 	if (argc==2){
 	  switch (*argv[1]){
 	  case '1':
@@ -849,15 +862,20 @@ int main(int argc, char *argv[]) {
 
 	    /* this is for direct reading from main, to test reading at once in main loop */
 	    /**/
-
-
 			config_IMU(&device,&mtPort, outputMode, outputSettings);
+			laps1 = clock();
 	    for (i=0;i<SampleNum;i++){
 	      read_sensor_all(i,SensorData);
-				measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData);
+				measure_IMU(&device,&mtPort, outputMode, outputSettings, &quaternion,&euler,&calData,&sample_time);
 
 				IMUData.calData[i] = calData;
+				IMUData.sample_time[i] = sample_time;
 
+				laps2 = clock();
+				double elapsed = double(laps2 - laps1) / CLOCKS_PER_SEC;
+				laps1 = laps2;
+
+				int delta_t;
 				// printing
 				printf("\r");
 				printf("[%d]\t",i);
@@ -872,9 +890,17 @@ int main(int argc, char *argv[]) {
 				for (j=0;j<3;j++){
 					printf("%.3f\t", IMUData.calData[i].m_gyr.value(j));
 				}
+
+				printf("%d\t",IMUData.sample_time[i]);
+				if (i>0){
+					delta_t = IMUData.sample_time[i]-IMUData.sample_time[i-1];
+				}
+				else{
+					delta_t = 0;
+				}
+				printf("%.5f\t",elapsed);
 				//printf("\n");
 	    }
-
 
 	    printf ("-------------------\n");
 	    fulllog("adc_acc_gyr",SensorData,IMUData.calData);
